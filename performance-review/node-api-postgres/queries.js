@@ -7,14 +7,20 @@ const pool = new Pool({
   port: 5432,
 })
 
-const getUsers = (request, response) => {
-    pool.query('SELECT * FROM usuario ORDER BY id ASC', (error, results) => {
-        if(error) {
-            throw error
-        }
-        response.status(200).json(results.rows)
-    })
-}
+// const getUsers = (request, response) => {
+//     pool.query('SELECT * FROM usuario ORDER BY id ASC', (error, results) => {
+//         if(error) {
+//             throw error
+//         }
+//         response.status(200).json(results.rows)
+//     })
+// }
+
+const getUsers = async (request, response) => {
+    const result = await pool.query('SELECT * FROM usuario ORDER BY id ASC')
+    console.log(result)
+    response.status(200).json(result.rows)
+} 
 
 const getUserById = (request, response) => {
     const id = parseInt(request.params.id)
@@ -28,25 +34,62 @@ const getUserById = (request, response) => {
 
 const getEnunciadoQuestao = (request, response) => {
     const id = parseInt(request.params.id)
-    pool.query('SELECT * FROM questao WHERE id = $1', [id], (error, results) => {
-        if(error) {
-            throw error
-        }
-        response.status(200).json(results.rows)
-    })
+    pool.query(`SELECT q.enunciado FROM questao q WHERE q.id = ${id}`,
+        [id],
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            response.status(200).json(results.rows)
+        })
 }
 
+// const getQuestaoPorPerfil = (request, response) => {
+//     const idPerfil = parseInt(request.params.idPerfil)
+//     pool.query(`select q.enunciado from questao q where q.id between 1 and (select p.qtd_questoes from perfil p where id = ${idPerfil})`,
+//         (error, results) => {
+//             if (error) {
+//                 throw error
+//             }
+//             response.status(200).json(results.rows)
+//         })
+// //     pool.query(`select c.nome from conceito c `,
+// //     (error, results) => {
+// //         if (error) {
+// //             throw error
+// //         }
+// //         response.status(200).json(results.rows)
+// //     })
+// }
+
+const getQuestaoPorPerfil = async (request, response) => {
+    const idPerfil = parseInt(request.params.idPerfil)
+    const enunciados = await pool.query(`select * from questao q where q.id between 1 and (select p.qtd_questoes from perfil p where id = ${idPerfil})`)
+    const opcoes = await pool.query(`select * from conceito c`)
+    const result = enunciados.rows.map( enunciado => {
+        let newItem = {...enunciado, opt:opcoes.rows}
+        return newItem
+    })
+//     pool.query(`select c.nome from conceito c `,
+//     (error, results) => {
+//         if (error) {
+//             throw error
+//         }
+//         response.status(200).json(results.rows)
+//     })
+    response.status(200).json(result)
+}
 
 const setRespostaQuestao = (request, response) => {
-    const {conceito_id, avaliacao_id, questao_id, observacao} = request.body
+    const { conceito_id, avaliacao_id, questao_id, observacao } = request.body
     pool.query('INSERT INTO resposta (conceito_id, avaliacao_id, questao_id, observacao) VALUES ($1, $2, $3, $4)',
-             [conceito_id, avaliacao_id, questao_id, observacao], 
-             (error, results) => {
-        if(error) {
-            throw error
-        }
-        response.status(201).send(`Resposta added with ID: ${results.rows[0].id}`)
-    })
+        [conceito_id, avaliacao_id, questao_id, observacao],
+        (error, results) => {
+            if (error) {
+                throw error
+            }
+            response.status(201).send(`Resposta added with ID: ${results.rows[0].id}`)
+        })
 }
 
 // const CreateUser = (request, response) => {
@@ -63,5 +106,6 @@ module.exports = {
     getUsers,
     getUserById,
     getEnunciadoQuestao,
-    setRespostaQuestao
+    setRespostaQuestao,
+    getQuestaoPorPerfil,
 }
