@@ -22,26 +22,16 @@ const getUsers = async (request, response) => {
     response.status(200).json(result.rows)
 } 
 
-const getUserById = (request, response) => {
+const getUserById = async (request, response) => {
     const id = parseInt(request.params.id)
-    pool.query('SELECT * FROM usuario WHERE id = $1', [id], (error, results) => {
-        if(error) {
-            throw error
-        }
-        response.status(200).json(results.rows)
-    })
+    const result = await pool.query(`SELECT * FROM usuario WHERE id = ${id}`)
+    response.status(200).json(result.rows)
 }
 
-const getEnunciadoQuestao = (request, response) => {
+const getEnunciadoQuestao = async (request, response) => {
     const id = parseInt(request.params.id)
-    pool.query(`SELECT q.enunciado FROM questao q WHERE q.id = ${id}`,
-        [id],
-        (error, results) => {
-            if (error) {
-                throw error
-            }
-            response.status(200).json(results.rows)
-        })
+    const questao = await pool.query(`SELECT * FROM questao q WHERE q.id = ${id}`)
+    response.status(200).json(questao.rows)
 }
 
 // const getQuestaoPorPerfil = (request, response) => {
@@ -92,6 +82,17 @@ const setRespostaQuestao = (request, response) => {
         })
 }
 
+const insertResposta = async (request, response) => {
+    try {
+        const { conceito_id, avaliacao_id, questao_id, observacao } = request.body
+        const result = await pool.query(`INSERT INTO resposta (conceito_id, avaliacao_id, questao_id, observacao) 
+                                                VALUES (${conceito_id}, ${avaliacao_id}, ${questao_id}, ${observacao})`)
+        response.status(201).send(`Resposta added with ID: ${result.rows}`)
+    } catch (error) {
+        console.log(error)
+        } 
+}
+
 // const CreateUser = (request, response) => {
 //     const { name, email } = request.body
 //     pool.query('INSERT INTO usuario (name, email) VALUES ($1, $2)', [name, email], (error, results) => {
@@ -108,4 +109,5 @@ module.exports = {
     getEnunciadoQuestao,
     setRespostaQuestao,
     getQuestaoPorPerfil,
+    insertResposta
 }

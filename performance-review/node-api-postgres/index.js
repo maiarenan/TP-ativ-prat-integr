@@ -3,7 +3,7 @@ const bodyParser = require('body-parser')
 const db = require('./queries') 
 const cors = require('cors')
 const app = express()
-const port = 3000
+const port = 3001
 
 app.use(cors())
 
@@ -21,6 +21,7 @@ app.get('/users', db.getUsers)
 app.get('/users/:id', db.getUserById)
 app.get('/questao/:id', db.getEnunciadoQuestao)
 app.get('/questoes/:idPerfil', db.getQuestaoPorPerfil)
+app.post('/insertresposta', db.insertResposta)
 
 app.listen(port, () => {
 console.log(`App running on port ${port}.`)
